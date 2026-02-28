@@ -1,0 +1,9 @@
+{
+  "name": "contract-risk-skill",
+  "version": "1.0.0",
+  "description": "Contract delivery risk review agent tool",
+  "type": "module",
+  "dependencies": {
+    "@opencode-ai/plugin": "latest"
+  }
+}

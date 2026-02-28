@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+演示模式 - 使用预设的审查结果生成报告（无需 API Key）
+"""
+
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
+from src.report_gen import ReportGenerator
+from pathlib import Path
+
+# 基于合肥晶合合同的实际审查结果
+demo_result = {
+    "high_risks": [
+        {
+            "index": 1,
+            "dimension": "付款条款风险",
+            "description": "无预付款，首付款 30% 在培训完成后支付，甲方承担全部启动资金压力",
+            "clause": "3.2 付款条款",
+            "suggestion": "争取 10-20% 预付款，或提高首付款比例至 40%"
+        },
+        {
+            "index": 2,
+            "dimension": "付款周期风险",
+            "description": "所有付款节点均为'收到发票后 60 天内'，账期过长，现金流压力大",
+            "clause": "3.2 付款条款",
+            "suggestion": "压缩至 30 天内，或约定'验收合格后 X 日内付款'"
+        }
+    ],
+    "medium_risks": [
+        {
+            "index": 1,
+            "dimension": "交付周期风险",
+            "description": "交付周期固定（1 个月/3 个月），未考虑甲方配合时间，无缓冲",
+            "clause": "2.2 交付",
+            "suggestion": "增加'因甲方原因导致延期，交付期顺延'条款"
+        },
+        {
+            "index": 2,
+            "dimension": "验收标准风险",
+            "description": "三阶段验收但部分标准主观（如'稳定运行无异常'定义不清）",
+            "clause": "2.3 验收",
+            "suggestion": "量化验收指标，增加'X 日内未反馈视为通过'"
+        },
+        {
+            "index": 3,
+            "dimension": "违约不对等",
+            "description": "乙方逾期 60 天违约金 20%，甲方逾期付款仅 0.2%/天且无上限",
+            "clause": "5.2 违约条款",
+            "suggestion": "争取对等违约金比例，或设置甲方付款上限"
+        }
+    ],
+    "low_risks": [
+        {
+            "index": 1,
+            "dimension": "质保金",
+            "description": "质保金 10% 偏高但在可接受范围",
+            "clause": "3.2 付款条款",
+            "suggestion": "关注现金流，可协商降至 5%"
+        },
+        {
+            "index": 2,
+            "dimension": "扩容价格",
+            "description": "已约定扩容阶梯价格，对乙方有利",
+            "clause": "3.1 价格条款",
+            "suggestion": "保持关注，确保交付质量促进扩容"
+        }
+    ],
+    "score": 55,
+    "recommendation": "🟠 较高风险，需谨慎评估",
+    "negotiation_tips": {
+        "must": [
+            "付款账期 60 天过长，必须压缩至 30 天",
+            "争取 10-20% 预付款或提高首付款比例",
+            "违约金对等：甲方逾期付款违约金应提高到与乙方对等（0.5%/天）"
+        ],
+        "should": [
+            "增加交付缓冲条款：甲方配合义务及延期顺延",
+            "验收量化：明确'稳定运行无异常'的具体指标",
+            "默认验收：增加验收期限及默认通过条款",
+            "质保金比例：争取降至 5%"
+        ],
+        "acceptable": [
+            "1 年质保期 - 行业标准",
+            "扩容阶梯价格 - 对乙方有利",
+            "人天单价 2000 元 - 合理市场价",
+            "禁止分包条款 - 可接受（如需分包可另行协商）"
+        ]
+    },
+    "notes": """### 合同亮点
+1. **扩容机制清晰**：容器云扩容设置了阶梯价格，有利于后期增购
+2. **SOW 明确**：引用了附件 SOW 作为交付依据
+3. **分阶段验收**：三阶段验收设计合理，降低一次性验收风险
+
+### 主要风险
+1. **现金流压力**：无预付款 +60 天账期，乙方需垫付约 50-60 万资金
+2. **交付刚性**：3 个月交付周期无缓冲，如甲方配合不及时易导致逾期
+3. **违约不对等**：甲方逾期付款成本低（0.2%/天），乙方逾期成本高（20% 总额）
+
+### 综合建议
+**建议承接但必须谈判**：
+- 核心目标：改善付款条件（账期 30 天 + 预付款）
+- 次要目标：增加交付缓冲条款
+- 底线条款：违约金对等
+
+如甲方不同意修改付款条款，建议将合同总价上浮 10-15% 以覆盖资金成本和风险。"""
+}
+
+# 生成报告
+output_dir = Path("output")
+output_dir.mkdir(exist_ok=True)
+output_path = output_dir / "risk_report_合肥晶合项目_演示"
+
+print("=" * 60)
+print("Contract Risk Agent Tool - 演示模式")
+print("=" * 60)
+print()
+
+gen = ReportGenerator(str(output_path))
+
+# 生成 Markdown
+md_path = gen.to_markdown(demo_result)
+print(f"✓ Markdown 报告已生成：{output_path}.md")
+
+# 尝试生成 PDF
+try:
+    pdf_path = gen.to_pdf(demo_result)
+    if pdf_path:
+        print(f"✓ PDF 报告已生成：{pdf_path}")
+    else:
+        print(f"⚠ PDF 生成失败（需要安装 weasyprint）")
+except Exception as e:
+    print(f"⚠ PDF 生成失败：{e}")
+
+print()
+print("=" * 60)
+print("审查结果摘要")
+print("=" * 60)
+print(f"合同名称：合肥晶合项目云原生管理平台采购合同")
+print(f"合同金额：88 万元")
+print(f"风险评分：{demo_result['score']}/100")
+print(f"承接建议：{demo_result['recommendation']}")
+print(f"高风险项：{len(demo_result['high_risks'])} 项")
+print(f"中风险项：{len(demo_result['medium_risks'])} 项")
+print(f"低风险项：{len(demo_result['low_risks'])} 项")
+print()
+print("报告位置：output/risk_report_合肥晶合项目_演示.md")
+print()
+print("⚠️  注意：此为演示报告，基于预设的审查结果")
+print("   如需 AI 实时审查，请激活阿里云百炼 API Key")
+print("=" * 60)

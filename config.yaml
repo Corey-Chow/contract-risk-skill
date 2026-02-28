@@ -1,0 +1,24 @@
+# Contract Risk Agent Tool 配置
+
+# 大模型配置
+alibaba_cloud:
+  api_key: "sk-sp-"
+  base_url: "https://coding.dashscope.aliyuncs.com/v1"
+  model: "qwen3.5-plus"
+  
+# 输出配置
+output:
+  format: ["markdown", "pdf"]
+  directory: "output"
+  auto_open: true
+  
+# 审查配置
+review:
+  include_low_risk: true
+  score_threshold: 40
+  auto_negotiation_tips: true
+  
+# 日志配置
+logging:
+  level: "INFO"
+  file: "logs/agent.log"
